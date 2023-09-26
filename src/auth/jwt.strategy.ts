@@ -5,11 +5,11 @@ import { Env } from 'src/env'
 import { z } from 'zod'
 import { Injectable } from '@nestjs/common'
 
-const tokenSchema = z.object({
+const userPayload = z.object({
   sub: z.string().uuid(),
 })
 
-type TokenSchema = z.infer<typeof tokenSchema>
+export type UserPayload = z.infer<typeof userPayload>
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -23,7 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     })
   }
 
-  async validate(paylod: TokenSchema) {
-    return tokenSchema.parse(paylod)
+  async validate(paylod: UserPayload) {
+    return userPayload.parse(paylod)
   }
 }
