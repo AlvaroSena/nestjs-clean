@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Body, Get } from '@nestjs/common'
+import { Controller, Post, UseGuards, Body, Get, Query } from '@nestjs/common'
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard'
 import { CurrentUser } from 'src/auth/current-user.decorator'
 import { UserPayload } from 'src/auth/jwt.strategy'
@@ -11,9 +11,18 @@ const createQuestionBodySchema = z.object({
   content: z.string(),
 })
 
+const pageQueryParamSchema = z
+  .string()
+  .optional()
+  .default('1')
+  .transform(Number)
+  .pipe(z.number().min(1))
+
 const bodyValidationPipe = new ZodValidationPipe(createQuestionBodySchema)
+const queryValidationPipe = new ZodValidationPipe(pageQueryParamSchema)
 
 type CreateQuestionBodySchema = z.infer<typeof createQuestionBodySchema>
+type PageQueryParamSchema = z.infer<typeof pageQueryParamSchema>
 
 @Controller('/questions')
 @UseGuards(JwtAuthGuard)
@@ -39,8 +48,14 @@ export class QuestionsController {
   }
 
   @Get()
-  async listRecentQuestions() {
+  async listRecentQuestions(
+    @Query('page', queryValidationPipe) page: PageQueryParamSchema,
+  ) {
+    const perPage = 1
+
     const questions = await this.prisma.question.findMany({
+      take: perPage,
+      skip: (page - 1) * perPage,
       orderBy: {
         createdAt: 'desc',
       },
